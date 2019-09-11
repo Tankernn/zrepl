@@ -3,6 +3,7 @@ package tests
 import (
 	"fmt"
 
+	"github.com/zrepl/zrepl/endpoint"
 	"github.com/zrepl/zrepl/platformtest"
 	"github.com/zrepl/zrepl/zfs"
 )
@@ -19,19 +20,21 @@ func ReplicationCursor(ctx *platformtest.Context) {
 	if err != nil {
 		panic(err)
 	}
-	guid, err := zfs.ZFSSetReplicationCursor(ds, "1 with space")
+
+	fs := ds.ToString()
+	snap := sendArgVersion(fs, "@1 with space")
+
+	err = endpoint.SetReplicationCursor(ctx, fs, &snap)
 	if err != nil {
 		panic(err)
-	}
-	snapProps, err := zfs.ZFSGetCreateTXGAndGuid(ds.ToString() + "@1 with space")
-	if err != nil {
-		panic(err)
-	}
-	if guid != snapProps.Guid {
-		panic(fmt.Sprintf("guids to not match: %v != %v", guid, snapProps.Guid))
 	}
 
-	bm, err := zfs.ZFSGetReplicationCursor(ds)
+	snapProps, err := zfs.ZFSGetCreateTXGAndGuid(snap.FullPath(fs))
+	if err != nil {
+		panic(err)
+	}
+
+	bm, err := endpoint.GetReplicationCursor(ds)
 	if err != nil {
 		panic(err)
 	}
@@ -41,16 +44,13 @@ func ReplicationCursor(ctx *platformtest.Context) {
 	if bm.Guid != snapProps.Guid {
 		panic(fmt.Sprintf("guids do not match: %v != %v", bm.Guid, snapProps.Guid))
 	}
-	if bm.Guid != guid {
-		panic(fmt.Sprintf("guids do not match: %v != %v", bm.Guid, guid))
-	}
 
 	// test nonexistent
 	err = zfs.ZFSDestroyFilesystemVersion(ds, bm)
 	if err != nil {
 		panic(err)
 	}
-	bm2, err := zfs.ZFSGetReplicationCursor(ds)
+	bm2, err := endpoint.GetReplicationCursor(ds)
 	if bm2 != nil {
 		panic(fmt.Sprintf("expecting no replication cursor after deleting it, got %v", bm))
 	}
