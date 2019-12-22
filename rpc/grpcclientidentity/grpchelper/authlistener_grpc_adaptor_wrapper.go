@@ -56,7 +56,7 @@ func NewServer(authListenerFactory transport.AuthenticatedListenerFactory, clien
 		Timeout: KeepalivePeerTimeout,
 	})
 	tcs := grpcclientidentity.NewTransportCredentials(logger)
-	unary, stream := grpcclientidentity.NewInterceptors(logger, clientIdentityKey)
+	unary, stream := grpcclientidentity.NewInterceptors(logger, clientIdentityKey, nil)
 	srv = grpc.NewServer(grpc.Creds(tcs), grpc.UnaryInterceptor(unary), grpc.StreamInterceptor(stream), ka)
 
 	serve = func() error {

@@ -41,7 +41,7 @@ func NewServer(handler Handler, loggers Loggers, ctxInterceptor HandlerContextIn
 
 	// setup control server
 	tcs := grpcclientidentity.NewTransportCredentials(loggers.Control) // TODO different subsystem for log
-	unary, stream := grpcclientidentity.NewInterceptors(loggers.Control, endpoint.ClientIdentityKey)
+	unary, stream := grpcclientidentity.NewInterceptors(loggers.Control, endpoint.ClientIdentityKey, ctxInterceptor)
 	controlServer := grpc.NewServer(grpc.Creds(tcs), grpc.UnaryInterceptor(unary), grpc.StreamInterceptor(stream))
 	pdu.RegisterReplicationServer(controlServer, handler)
 	controlServerServe := func(ctx context.Context, controlListener transport.AuthenticatedListener, errOut chan<- error) {
